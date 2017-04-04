@@ -4,7 +4,7 @@ require 'net/https'
 require 'net/ftp'
 require 'fileutils'
 require 'tempfile'
-require 'digest/md5'
+require 'digest'
 require 'open-uri'
 require 'cgi'
 require 'rbconfig'
@@ -95,9 +95,9 @@ class MiniPortile
   def configure
     return if configured?
 
-    md5_file = File.join(tmp_path, 'configure.md5')
-    digest   = Digest::MD5.hexdigest(computed_options.to_s)
-    File.open(md5_file, "w") { |f| f.write digest }
+    sha256_file = File.join(tmp_path, 'configure.sha256')
+    digest   = Digest::SHA256.hexdigest(computed_options.to_s)
+    File.open(sha256_file, "w") { |f| f.write digest }
 
     if RUBY_PLATFORM=~/mingw|mswin/
       # Windows doesn't recognize the shebang.
@@ -127,12 +127,12 @@ class MiniPortile
   def configured?
     configure = File.join(work_path, 'configure')
     makefile  = File.join(work_path, 'Makefile')
-    md5_file  = File.join(tmp_path, 'configure.md5')
+    sha256_file  = File.join(tmp_path, 'configure.sha256')
 
-    stored_md5  = File.exist?(md5_file) ? File.read(md5_file) : ""
-    current_md5 = Digest::MD5.hexdigest(computed_options.to_s)
+    stored_sha256  = File.exist?(sha256_file) ? File.read(sha256_file) : ""
+    current_sha256 = Digest::SHA256.hexdigest(computed_options.to_s)
 
-    (current_md5 == stored_md5) && newer?(makefile, configure)
+    (current_sha256 == stored_sha256) && newer?(makefile, configure)
   end
 
   def installed?
